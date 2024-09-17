@@ -27,14 +27,29 @@ app.get("/profile", isLoggendIn, async (req, res) => {
 
 app.get("/like/:id", isLoggendIn, async (req, res) => {
     let post = await postModel.findOne({_id: req.params.id}).populate("user");
-    post.likes.push(req.user.userid);
+    if(post.likes.indexOf(req.user.userid) === -1){
+        post.likes.push(req.user.userid);
+    }
+    else{
+        post.likes.splice(post.likes.indexOf(req.user.userid),1);
+    }
     await post.save();
-    res.render("/profile")
+    res.redirect("/profile")
+});
+
+app.get("/edit/:id", isLoggendIn, async (req, res) => {
+    let post = await postModel.findOne({_id: req.params.id}).populate("user");
+    res.render("edit",{post})
 });
 
 app.get("/logout", (req, res) => {
     res.cookie("token", "");
     res.redirect("login");
+});
+
+app.post("/update/:id", isLoggendIn, async (req, res) => {
+    let post = await postModel.findOneAndUpdate({_id: req.params.id}, {content: req.body.content});
+    res.redirect("/profile")
 });
 
 app.post("/post", isLoggendIn, async (req, res) => {
