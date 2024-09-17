@@ -25,6 +25,13 @@ app.get("/profile", isLoggendIn, async (req, res) => {
     else res.render("/login")
 });
 
+app.get("/like/:id", isLoggendIn, async (req, res) => {
+    let post = await postModel.findOne({_id: req.params.id}).populate("user");
+    post.likes.push(req.user.userid);
+    await post.save();
+    res.render("/profile")
+});
+
 app.get("/logout", (req, res) => {
     res.cookie("token", "");
     res.redirect("login");
