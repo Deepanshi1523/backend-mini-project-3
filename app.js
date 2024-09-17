@@ -5,41 +5,66 @@ const postModel = require("./models/post");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto")
+const path = require("path");
+// const multer = require("multer")
 
 app.set("view engine", "ejs");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, './public/images/uploads')
+//     },
+//     filename: function (req, file, cb) {
+//       crypto.randomBytes(12, function(err,bytes){
+//         const fn = bytes.toString("hex")+path.extname(file.originalname);
+//         cb(null, fn)
+//       })
+//     }
+//   })
+
+//   const upload = multer({ storage: storage })
+
 app.get("/", (req, res) => {
     res.render("index");
 });
+
+// app.get("/test", (req, res) => {
+//     res.render("test");
+// });
+
+// app.post("/upload", upload.single("image"), (req, res) => {
+//     console.log(req.file);
+// });
 
 app.get("/login", (req, res) => {
     res.render("login");
 });
 
 app.get("/profile", isLoggendIn, async (req, res) => {
-    let user = await userModel.findOne({email: req.user.email}).populate("posts");
-    if(user) res.render("profile", {user});
+    let user = await userModel.findOne({ email: req.user.email }).populate("posts");
+    if (user) res.render("profile", { user });
     else res.render("/login")
 });
 
 app.get("/like/:id", isLoggendIn, async (req, res) => {
-    let post = await postModel.findOne({_id: req.params.id}).populate("user");
-    if(post.likes.indexOf(req.user.userid) === -1){
+    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+    if (post.likes.indexOf(req.user.userid) === -1) {
         post.likes.push(req.user.userid);
     }
-    else{
-        post.likes.splice(post.likes.indexOf(req.user.userid),1);
+    else {
+        post.likes.splice(post.likes.indexOf(req.user.userid), 1);
     }
     await post.save();
     res.redirect("/profile")
 });
 
 app.get("/edit/:id", isLoggendIn, async (req, res) => {
-    let post = await postModel.findOne({_id: req.params.id}).populate("user");
-    res.render("edit",{post})
+    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+    res.render("edit", { post })
 });
 
 app.get("/logout", (req, res) => {
@@ -48,13 +73,13 @@ app.get("/logout", (req, res) => {
 });
 
 app.post("/update/:id", isLoggendIn, async (req, res) => {
-    let post = await postModel.findOneAndUpdate({_id: req.params.id}, {content: req.body.content});
+    let post = await postModel.findOneAndUpdate({ _id: req.params.id }, { content: req.body.content });
     res.redirect("/profile")
 });
 
 app.post("/post", isLoggendIn, async (req, res) => {
-    let user = await userModel.findOne({email: req.user.email});
-    let {content} = req.body;
+    let user = await userModel.findOne({ email: req.user.email });
+    let { content } = req.body;
 
     let post = await postModel.create({
         user: user._id,
